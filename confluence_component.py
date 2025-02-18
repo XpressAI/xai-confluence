@@ -1,3 +1,4 @@
+import os
 from xai_components.base import Component, InArg, OutArg, xai_component
 from atlassian import Confluence
 
@@ -6,9 +7,10 @@ class ConfluenceAuthorize(Component):
     """A component to initialize a Confluence client.
 
     ##### inPorts:
-    - url (str): The URL of the Confluence instance.
-    - username (str): The username for authentication.
-    - password (str): The password for authentication.
+    - url (str): The URL of the Confluence instance. If from_env is True, reads from CONFLUENCE_URL.
+    - username (str): The username for authentication. If from_env is True, reads from CONFLUENCE_USER.
+    - password (str): The password for authentication. If from_env is True, reads from CONFLUENCE_PASSWORD.
+    - from_env (bool): If True, reads credentials from environment variables instead of input ports.
 
     ##### outPorts:
     - client (Confluence): The initialized Confluence client.
@@ -16,13 +18,25 @@ class ConfluenceAuthorize(Component):
     url: InArg[str]
     username: InArg[str]
     password: InArg[str]
+    from_env: InArg[bool]
     client: OutArg[Confluence]
 
     def execute(self, ctx) -> None:
+        if self.from_env.value:
+            url = os.environ.get('CONFLUENCE_URL')
+            username = os.environ.get('CONFLUENCE_USER')
+            password = os.environ.get('CONFLUENCE_PASSWORD')
+            if not all([url, username, password]):
+                raise ValueError("Missing required environment variables: CONFLUENCE_URL, CONFLUENCE_USER, CONFLUENCE_PASSWORD")
+        else:
+            url = self.url.value
+            username = self.username.value
+            password = self.password.value
+
         self.client.value = Confluence(
-            url=self.url.value,
-            username=self.username.value,
-            password=self.password.value,
+            url=url,
+            username=username,
+            password=password,
             cloud=True
         )
         ctx['confluence_client'] = self.client.value
