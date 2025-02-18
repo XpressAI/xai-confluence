@@ -39,6 +39,7 @@ class ConfluenceAuthorize(Component):
             password=password,
             cloud=True
         )
+        ctx['confluence_client'] = self.client.value
 
 
 
@@ -59,7 +60,10 @@ class ConfluenceGetPage(Component):
     page: OutArg[dict]
 
     def execute(self, ctx) -> None:
-        self.page.value = self.client.value.get_page_by_id(self.page_id.value)
+        client = self.client.value if self.client.value else ctx.get('confluence_client')
+        if not client:
+            raise ValueError("No Confluence client provided or found in context")
+        self.page.value = client.get_page_by_id(self.page_id.value)
 
 @xai_component
 class ConfluenceSearchPages(Component):
@@ -77,7 +81,10 @@ class ConfluenceSearchPages(Component):
     results: OutArg[list]
 
     def execute(self, ctx) -> None:
-        self.results.value = self.client.value.cql(f'SELECT * FROM content WHERE type = "page" AND title ~ "{self.query.value}"')
+        client = self.client.value if self.client.value else ctx.get('confluence_client')
+        if not client:
+            raise ValueError("No Confluence client provided or found in context")
+        self.results.value = client.cql(f'SELECT * FROM content WHERE type = "page" AND title ~ "{self.query.value}"')
 
 
 @xai_component
@@ -100,6 +107,10 @@ class ConfluenceSearchByQueryAndTag(Component):
     results: OutArg[list]
 
     def execute(self, ctx) -> None:
+        client = self.client.value if self.client.value else ctx.get('confluence_client')
+        if not client:
+            raise ValueError("No Confluence client provided or found in context")
+            
         # Build the CQL query
         tag_conditions = []
         for tag in self.tags.value:
@@ -112,8 +123,7 @@ class ConfluenceSearchByQueryAndTag(Component):
         if tag_conditions:
             full_query += f' AND {tag_query}'
 
-        self.results.value = self.client.value.cql(full_query)
-        ctx['confluence_client'] = self.client.value
+        self.results.value = client.cql(full_query)
 
 
 @xai_component
@@ -136,7 +146,10 @@ class ConfluenceCreatePage(Component):
     page: OutArg[dict]
 
     def execute(self, ctx) -> None:
-        self.page.value = self.client.value.create_page(
+        client = self.client.value if self.client.value else ctx.get('confluence_client')
+        if not client:
+            raise ValueError("No Confluence client provided or found in context")
+        self.page.value = client.create_page(
             space=self.space.value,
             title=self.title.value,
             body=self.content.value
