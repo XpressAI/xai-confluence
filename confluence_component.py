@@ -18,7 +18,7 @@ class ConfluenceAuthorize(Component):
     url: InArg[str]
     username: InArg[str]
     password: InArg[str]
-    from_env: InArg[bool]
+    from_env: InCompArg[bool]
     client: OutArg[Confluence]
 
     def execute(self, ctx) -> None:
