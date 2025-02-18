@@ -39,6 +39,41 @@ class ConfluenceAuthorize(Component):
             password=password,
             cloud=True
         )
+
+
+@xai_component
+class ConfluenceSearchByQueryAndTag(Component):
+    """A component to search for pages in Confluence by both query and tags.
+
+    ##### inPorts:
+    - client (Confluence): The Confluence client.
+    - query (str): The search query for page content or title.
+    - tags (list): List of labels/tags that pages must have.
+    - match_all_tags (bool): If True, pages must have all specified tags. If False, pages can match any of the tags.
+
+    ##### outPorts:
+    - results (list): The list of pages matching both the search query and tags.
+    """
+    client: InArg[Confluence]
+    query: InArg[str]
+    tags: InArg[list]
+    match_all_tags: InArg[bool]
+    results: OutArg[list]
+
+    def execute(self, ctx) -> None:
+        # Build the CQL query
+        tag_conditions = []
+        for tag in self.tags.value:
+            tag_conditions.append(f'labelText = "{tag}"')
+        
+        tag_operator = " AND " if self.match_all_tags.value else " OR "
+        tag_query = f"({tag_operator.join(tag_conditions)})"
+        
+        full_query = f'type = page AND title ~ "{self.query.value}"'
+        if tag_conditions:
+            full_query += f' AND {tag_query}'
+
+        self.results.value = self.client.value.cql(full_query)
         ctx['confluence_client'] = self.client.value
         
 
