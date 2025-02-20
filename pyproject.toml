@@ -1,0 +1,17 @@
+[project]
+name = "xai-confluence"
+version = "0.1.0"
+description = "Component library for confluence"
+authors = [{ name = "XpressAI", email = "eduardo@xpress.ai" }]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/XpressAI/xai-confluence"
+keywords = ["xircuits","confluence"]
+
+dependencies = [
+    "atlassian_python_api==3.41.19",
+]
+
+# Xircuits-specific configurations
+[tool.xircuits]
+requirements_path = "requirements.txt"
