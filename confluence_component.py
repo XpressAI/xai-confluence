@@ -1,5 +1,5 @@
 import os
-from xai_components.base import Component, InArg, OutArg, xai_component
+from xai_components.base import Component, InArg, InCompArg, OutArg, xai_component
 from atlassian import Confluence
 
 @xai_component
@@ -85,6 +85,28 @@ class ConfluenceSearchPages(Component):
         if not client:
             raise ValueError("No Confluence client provided or found in context")
         self.results.value = client.cql(f'SELECT * FROM content WHERE type = "page" AND title ~ "{self.query.value}"')
+
+
+@xai_component
+class ConfluenceCQLQuery(Component):
+    """A component to perform arbitrary CQL on Confluence.
+
+    ##### inPorts:
+    - client (Confluence): The Confluence client.
+    - query (str): The CQL query.
+
+    ##### outPorts:
+    - results (list): The list of pages matching the search query.
+    """
+    client: InArg[Confluence]
+    query: InArg[str]
+    results: OutArg[list]
+
+    def execute(self, ctx) -> None:
+        client = self.client.value if self.client.value else ctx.get('confluence_client')
+        if not client:
+            raise ValueError("No Confluence client provided or found in context")
+        self.results.value = client.cql(self.query.value)
 
 
 @xai_component
